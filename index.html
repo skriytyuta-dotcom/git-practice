@@ -1,1 +1,53 @@
-<!DOCTYPE html><html><head><style>body{font-family:sans-serif;text-align:center;background:#f0f4f8;padding:50px;}h1{color:#2b6cb0;}</style></head><body><h1>Welcome to My Special Website!</h1><p>Git & GitHub Mastered!</p></body></html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>リアルタイムお天気アプリ</title>
+  <style>
+    body { font-family: sans-serif; background: linear-gradient(135deg, #74ebe5, #89f7fe); min-height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+    .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+    input { width: 60%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+    button { padding: 10px 15px; border: none; background: #007bff; color: white; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .result { margin-top: 20px; font-size: 18px; }
+    .temp { font-size: 36px; font-weight: bold; margin: 10px 0; color: #007bff; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🌤️ お天気検索</h2>
+    <input type="text" id="cityInput" placeholder="例: Tokyo">
+    <button id="searchBtn">検索</button>
+    <div id="weatherResult" class="result">
+      <p>都市名（アルファベット）を入力して検索してください</p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("searchBtn").addEventListener("click", async () => {
+      const city = document.getElementById("cityInput").value.trim();
+      const resultDiv = document.getElementById("weatherResult");
+      if (!city) {
+        resultDiv.innerHTML = "<p style=\"color:red;\">都市名を入力してください</p>";
+        return;
+      }
+      resultDiv.innerHTML = "<p>データ取得中...</p>";
+      try {
+        const geoRes = await fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(city) + "&count=1&language=ja&format=json");
+        const geoData = await geoRes.json();
+        if (!geoData.results || geoData.results.length === 0) {
+          resultDiv.innerHTML = "<p style=\"color:red;\">都市が見つかりませんでした</p>";
+          return;
+        }
+        const { latitude, longitude, name, country } = geoData.results[0];
+        const weatherRes = await fetch("https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&current_weather=true");
+        const weatherData = await weatherRes.json();
+        const temp = weatherData.current_weather.temperature;
+        resultDiv.innerHTML = "<h3>📍 " + name + ", " + (country || "") + "</h3><div class=\"temp\">" + temp + " °C</div><p>現在のリアルタイム気温</p>";
+      } catch (err) {
+        resultDiv.innerHTML = "<p style=\"color:red;\">エラーが発生しました</p>";
+      }
+    });
+  </script>
+</body>
+</html>
